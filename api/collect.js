@@ -16,48 +16,37 @@ const db = getFirestore(app);
 export default async function handler(req, res) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-  if (!GEMINI_API_KEY) {
-    return res.status(500).json({ error: "VercelのEnvironment Variablesに GEMINI_API_KEY が登録されていません。" });
-  }
-
   try {
-    // 安定性の高い 1.5-flash モデルを使用
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     const aiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: "日本の公務員不祥事ニュースを3件探し、以下のJSON形式で答えてください。余計な説明文は一切入れず、[ から ] までだけを出力してください。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]"
-          }]
-        }]
+        contents: [{ parts: [{ text: "日本の公務員不祥事ニュースを3件探し、JSON形式で出力してください。[{\"date\":\"2024.03.22\", \"location\":\"...\", \"what\":\"...\", \"summary\":\"...\", \"punishment\":\"...\", \"category\":\"...\"}]" }] }]
       })
     });
 
     const aiData = await aiResponse.json();
 
-    // Google側でエラーが起きている場合
+    // --- ここが超重要：ログにGoogleの生の声を出す ---
+    console.log("Google API Response Status:", aiResponse.status);
+    console.log("Google API Response Data:", JSON.stringify(aiData));
+
     if (aiData.error) {
       return res.status(500).json({ 
-        error: "Google APIエラー", 
-        message: aiData.error.message,
-        reason: aiData.error.status 
+        error: "Google側でエラーが発生しました", 
+        message: aiData.error.message, // ここに「なぜダメか」が表示されます
+        status: aiData.error.status 
       });
     }
 
-    if (!aiData.candidates || !aiData.candidates[0].content) {
-      return res.status(500).json({ error: "AIからの応答が空です", detail: aiData });
+    if (!aiData.candidates) {
+      return res.status(500).json({ error: "AIの返答が空でした", full_data: aiData });
     }
 
-    let rawText = aiData.candidates[0].content.parts[0].text;
-    // 余計なマークダウン記号を削除
+    const rawText = aiData.candidates[0].content.parts[0].text;
     const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      return res.status(500).json({ error: "JSON形式が見つかりませんでした", rawText });
-    }
-
     const newsItems = JSON.parse(jsonMatch[0]);
 
     let addedCount = 0;
@@ -70,13 +59,9 @@ export default async function handler(req, res) {
       }
     }
 
-    res.status(200).json({ 
-      message: "成功しました！", 
-      added: addedCount, 
-      news: newsItems 
-    });
+    res.status(200).json({ message: "成功しました", added: addedCount, news: newsItems });
 
   } catch (error) {
-    res.status(500).json({ error: "プログラム実行エラー", message: error.message });
+    res.status(500).json({ error: "実行エラー", message: error.message });
   }
 }
