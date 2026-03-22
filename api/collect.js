@@ -1,6 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, addDoc, query, where, getDocs } from "firebase/firestore";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Firebase設定
 const firebaseConfig = {
@@ -16,58 +15,76 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export default async function handler(req, res) {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-  if (!apiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEYがVercelに設定されていません" });
+  if (!GEMINI_API_KEY) {
+    return res.status(500).json({ error: "GEMINI_API_KEYが設定されていません。VercelのSettingsを確認してください。" });
   }
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // 【修正の核心】
-    // モデル名を 'gemini-1.5-flash' にし、
-    // 明示的に apiVersion を 'v1' に指定することで 404 エラーを確実に回避します。
-    const model = genAI.getGenerativeModel(
-      { model: "gemini-1.5-flash" },
-      { apiVersion: "v1" } 
-    );
+  // 試行するモデルのリスト（新しい順）
+  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+  let lastError = null;
 
-    const prompt = "日本の最新の公務員不祥事・懲戒処分ニュースを3件探し、以下のJSON形式の配列のみで出力してください。説明は不要です。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]";
+  for (const modelName of modelsToTry) {
+    try {
+      const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+      
+      const aiResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: "日本の最新の公務員不祥事ニュースを3件探し、以下の形式のJSON配列のみを出力してください。説明不要。[{\"date\":\"2024.03.22\", \"location\":\"...\", \"what\":\"...\", \"summary\":\"...\", \"punishment\":\"...\", \"category\":\"...\"}]"
+            }]
+          }]
+        })
+      });
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+      const aiData = await aiResponse.json();
 
-    // AIの回答から [ ] の部分（JSON）だけを抜き出す
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error("AIが正しいデータ形式で回答しませんでした。");
-    }
-    const newsItems = JSON.parse(jsonMatch[0]);
-
-    // Firebaseへ保存（重複はスキップ）
-    let addedCount = 0;
-    for (const item of newsItems) {
-      const q = query(collection(db, "misconduct_cases"), where("what", "==", item.what));
-      const snapshot = await getDocs(q);
-      if (snapshot.empty) {
-        await addDoc(collection(db, "misconduct_cases"), item);
-        addedCount++;
+      // 404が出たら次のモデルを試す
+      if (aiResponse.status === 404) {
+        lastError = `モデル ${modelName} は見つかりませんでした(404)。`;
+        continue;
       }
+
+      if (aiData.error) {
+        lastError = aiData.error.message;
+        continue;
+      }
+
+      // 成功した場合の処理
+      const rawText = aiData.candidates[0].content.parts[0].text;
+      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+      const newsItems = JSON.parse(jsonMatch[0]);
+
+      let addedCount = 0;
+      for (const item of newsItems) {
+        const q = query(collection(db, "misconduct_cases"), where("what", "==", item.what));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+          await addDoc(collection(db, "misconduct_cases"), item);
+          addedCount++;
+        }
+      }
+
+      return res.status(200).json({ 
+        message: "成功しました！", 
+        model_used: modelName,
+        added: addedCount, 
+        news: newsItems 
+      });
+
+    } catch (e) {
+      lastError = e.message;
     }
-
-    res.status(200).json({ 
-      message: "成功しました！", 
-      added: addedCount, 
-      news: newsItems 
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ 
-      error: "実行エラー", 
-      message: error.message,
-      tip: "VercelのValueに余計なスペースや引用符が入っていないか確認してください"
-    });
   }
+
+  // すべての試行が失敗した場合
+  res.status(500).json({ 
+    error: "すべてのAIモデルで失敗しました", 
+    last_error: lastError,
+    tip: "Google AI Studioで新しいAPIキーを作成し、Vercelの値を更新してRedeployしてみてください。"
+  });
 }
