@@ -3,7 +3,7 @@ import { getFirestore, collection, addDoc, query, where, getDocs } from "firebas
 
 // Firebaseの設定を直接書き込み（場所のミスを防ぐため）
 const firebaseConfig = {
-  apiKey: "AIzaSyB5K73evEK33c3VIOlIEkOz2c1IRAiltWM",
+  apiKey: " GEMINI_API_KEY と",
   authDomain: "fusakui-db.firebaseapp.com",
   projectId: "fusakui-db",
   storageBucket: "fusakui-db.firebasestorage.app",
