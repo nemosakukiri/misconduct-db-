@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // Firebase設定
 const firebaseConfig = {
@@ -16,60 +16,67 @@ const db = getFirestore(app);
 
 export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "VERCEL_API_KEY_NOT_FOUND" });
 
-  // Claudeが提案してくれた、確実に動く軽量モデルのリスト
-  const models = ["gemini-2.0-flash-lite", "gemini-1.5-flash-8b"];
-  let lastError = null;
+  try {
+    // 1. 【自動検知】あなたの鍵で今「本当に」使えるモデルの名前をGoogleに聞く
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const listData = await listRes.json();
 
-  for (const modelName of models) {
-    try {
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-      
-      const aiResponse = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: "日本の最新の公務員不祥事ニュースを1件だけ探し、以下のJSON形式の配列のみで答えてください。余計な文は一切不要。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"不祥事\"}]"
-            }]
-          }]
-        })
-      });
-
-      const aiData = await aiResponse.json();
-
-      if (aiData.error) {
-        lastError = aiData.error.message;
-        continue; // 制限エラーが出たら次のモデルを試す
-      }
-
-      const rawText = aiData.candidates[0].content.parts[0].text;
-      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-      const newsItems = JSON.parse(jsonMatch[0]);
-
-      for (const item of newsItems) {
-        // 重複チェック
-        const q = query(collection(db, "misconduct_cases"), where("what", "==", item.what));
-        const snap = await getDocs(q);
-        if (snap.empty) {
-          await addDoc(collection(db, "misconduct_cases"), {
-            ...item,
-            collectedAt: serverTimestamp()
-          });
-        }
-      }
-
-      return res.status(200).json({ 
-        message: "成功しました！", 
-        model: modelName, 
-        news: newsItems 
-      });
-
-    } catch (e) {
-      lastError = e.message;
+    if (listData.error) {
+      return res.status(500).json({ error: "API_KEY_ERROR", message: listData.error.message });
     }
-  }
 
-  res.status(500).json({ error: "すべての軽量モデルで失敗しました", detail: lastError });
+    // 2. 使えるモデルの中から、ニュース取得ができるものを1つ選ぶ
+    // (geminiという名前を含み、かつ生成ができるモデルを探します)
+    const validModel = listData.models.find(m => 
+      m.name.includes('gemini') && 
+      m.supportedGenerationMethods.includes('generateContent')
+    );
+
+    if (!validModel) {
+      return res.status(500).json({ error: "NO_USABLE_MODEL", list: listData });
+    }
+
+    const modelPath = validModel.name; // 例: "models/gemini-1.5-flash"
+
+    // 3. 検知された正しい名前でAIを実行（件数は1件に絞りタイムアウトを防止）
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${apiKey}`;
+    
+    const aiResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: "日本の最新の公務員不祥事ニュースを1件探し、JSON配列形式でのみ回答。 [{\"date\":\"2024.03.22\", \"location\":\"...\", \"what\":\"...\", \"summary\":\"...\", \"punishment\":\"...\", \"category\":\"...\"}]"
+          }]
+        }]
+      })
+    });
+
+    const aiData = await aiResponse.json();
+    if (aiData.error) return res.status(500).json({ error: "AI_RUN_ERROR", msg: aiData.error.message });
+
+    const rawText = aiData.candidates[0].content.parts[0].text;
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+    const newsItems = JSON.parse(jsonMatch[0]);
+
+    // 4. Firebaseに保存
+    for (const item of newsItems) {
+      await addDoc(collection(db, "misconduct_cases"), {
+        ...item,
+        collectedAt: serverTimestamp()
+      });
+    }
+
+    res.status(200).json({ 
+      message: "成功！自動検知で動かしました", 
+      used_model: modelPath, 
+      news: newsItems 
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: "FATAL_ERROR", msg: error.message });
+  }
 }
