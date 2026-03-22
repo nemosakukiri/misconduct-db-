@@ -16,31 +16,36 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export default async function handler(req, res) {
-  // 1. キーの存在チェック（ここが原因の可能性大）
   const apiKey = process.env.GEMINI_API_KEY;
+
   if (!apiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEYがVercelに設定されていません。Settingsを確認してください。" });
+    return res.status(500).json({ error: "GEMINI_API_KEYがVercelに設定されていません" });
   }
 
   try {
-    // 2. 公式SDKを使用してGeminiを初期化
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // 【修正の核心】
+    // モデル名を 'gemini-1.5-flash' にし、
+    // 明示的に apiVersion を 'v1' に指定することで 404 エラーを確実に回避します。
+    const model = genAI.getGenerativeModel(
+      { model: "gemini-1.5-flash" },
+      { apiVersion: "v1" } 
+    );
 
-    const prompt = "日本の最新の公務員不祥事ニュースを3件探し、以下のJSON形式の配列のみを出力してください。余計な説明文は不要です。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]";
+    const prompt = "日本の最新の公務員不祥事・懲戒処分ニュースを3件探し、以下のJSON形式の配列のみで出力してください。説明は不要です。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]";
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = result.response.text();
 
-    // AIの回答からJSONを抽出
+    // AIの回答から [ ] の部分（JSON）だけを抜き出す
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      throw new Error("AIの回答がJSON形式ではありませんでした: " + text);
+      throw new Error("AIが正しいデータ形式で回答しませんでした。");
     }
     const newsItems = JSON.parse(jsonMatch[0]);
 
-    // 3. Firebaseへ保存
+    // Firebaseへ保存（重複はスキップ）
     let addedCount = 0;
     for (const item of newsItems) {
       const q = query(collection(db, "misconduct_cases"), where("what", "==", item.what));
@@ -59,6 +64,10 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "実行時にエラーが発生しました", details: error.message });
+    res.status(500).json({ 
+      error: "実行エラー", 
+      message: error.message,
+      tip: "VercelのValueに余計なスペースや引用符が入っていないか確認してください"
+    });
   }
 }
