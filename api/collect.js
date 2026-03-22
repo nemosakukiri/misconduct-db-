@@ -1,8 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Firebase設定（修正不要）
+// Firebase設定（変更不要）
 const firebaseConfig = {
   apiKey: "AIzaSyB5K73evEK33c3VIOlIEkOz2c1IRAiltWM",
   authDomain: "fusakui-db.firebaseapp.com",
@@ -17,32 +16,38 @@ const db = getFirestore(app);
 
 export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return res.status(500).json({ error: "VercelにGEMINI_API_KEYが設定されていません" });
-  }
+  if (!apiKey) return res.status(500).json({ error: "APIキーが設定されていません" });
 
   try {
-    // 1. Google公式ライブラリを使用してGeminiを準備
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // 最も安定している 1.5-flash を使用
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // 【修正のポイント】 窓口を「v1」、モデル名を「gemini-1.5-flash」にしています
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    
+    const aiResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: "日本の最新の公務員不祥事・懲戒処分ニュースを2件探し、以下のJSON形式の配列のみで答えてください。説明不要。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"不祥事\"}]"
+          }]
+        }]
+      })
+    });
 
-    const prompt = "日本の最新の公務員不祥事ニュースを2件探し、以下のJSON配列形式のみで出力してください。余計な解説は不要です。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]";
+    const aiData = await aiResponse.json();
 
-    // 2. AIから回答を取得
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    // 3. 回答からJSON部分を抽出
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error("AIの回答がJSON形式ではありませんでした");
+    if (aiData.error) {
+      return res.status(500).json({ 
+        error: "Google側でエラーが発生しました", 
+        message: aiData.error.message,
+        code: aiData.error.code 
+      });
     }
+
+    const rawText = aiData.candidates[0].content.parts[0].text;
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
     const newsItems = JSON.parse(jsonMatch[0]);
 
-    // 4. Firebaseに保存（最短の処理でタイムアウトを防止）
     for (const item of newsItems) {
       await addDoc(collection(db, "misconduct_cases"), {
         ...item,
@@ -50,18 +55,9 @@ export default async function handler(req, res) {
       });
     }
 
-    res.status(200).json({ 
-      message: "成功しました！", 
-      count: newsItems.length,
-      news: newsItems 
-    });
+    res.status(200).json({ message: "ついに成功しました！", news: newsItems });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ 
-      error: "実行エラー", 
-      message: error.message,
-      detail: "APIキーが無効、またはGoogle AI Studio側でAPIが有効化されていない可能性があります"
-    });
+    res.status(500).json({ error: "実行失敗", message: error.message });
   }
 }
