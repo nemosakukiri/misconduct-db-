@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, addDoc, query, where, getDocs } from "firebase/firestore";
 
+// Firebaseの設定（ここに直接書くことでエラーを防ぎます）
 const firebaseConfig = {
   apiKey: "AIzaSyB5K73evEK33c3VIOlIEkOz2c1IRAiltWM",
   authDomain: "fusakui-db.firebaseapp.com",
@@ -16,39 +17,46 @@ const db = getFirestore(app);
 export default async function handler(req, res) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+  if (!GEMINI_API_KEY) {
+    return res.status(500).json({ error: "APIキーがVercelに登録されていません" });
+  }
+
   try {
+    // 1. Google Gemini API を呼び出す
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     const aiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: "日本の公務員不祥事ニュースを3件探し、JSON形式で出力してください。[{\"date\":\"2024.03.22\", \"location\":\"...\", \"what\":\"...\", \"summary\":\"...\", \"punishment\":\"...\", \"category\":\"...\"}]" }] }]
+        contents: [{
+          parts: [{
+            text: "日本の公務員不祥事ニュースを3件探し、以下のJSON形式の配列のみを出力してください。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]"
+          }]
+        }]
       })
     });
 
     const aiData = await aiResponse.json();
 
-    // --- ここが超重要：ログにGoogleの生の声を出す ---
-    console.log("Google API Response Status:", aiResponse.status);
-    console.log("Google API Response Data:", JSON.stringify(aiData));
-
+    // Google API 側でエラーが出ている場合の詳細表示
     if (aiData.error) {
       return res.status(500).json({ 
-        error: "Google側でエラーが発生しました", 
-        message: aiData.error.message, // ここに「なぜダメか」が表示されます
-        status: aiData.error.status 
+        error: "Google APIエラーが発生しました", 
+        detail: aiData.error.message,
+        status: aiData.error.status
       });
-    }
-
-    if (!aiData.candidates) {
-      return res.status(500).json({ error: "AIの返答が空でした", full_data: aiData });
     }
 
     const rawText = aiData.candidates[0].content.parts[0].text;
     const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      return res.status(500).json({ error: "AIが正しいJSONを返しませんでした", rawText });
+    }
+    
     const newsItems = JSON.parse(jsonMatch[0]);
 
+    // 2. Firebaseに保存
     let addedCount = 0;
     for (const item of newsItems) {
       const q = query(collection(db, "misconduct_cases"), where("what", "==", item.what));
@@ -59,7 +67,7 @@ export default async function handler(req, res) {
       }
     }
 
-    res.status(200).json({ message: "成功しました", added: addedCount, news: newsItems });
+    res.status(200).json({ message: "成功しました！", added: addedCount, news: newsItems });
 
   } catch (error) {
     res.status(500).json({ error: "実行エラー", message: error.message });
