@@ -1,7 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-// Firebase設定
 const firebaseConfig = {
   apiKey: "AIzaSyB5K73evEK33c3VIOlIEkOz2c1IRAiltWM",
   authDomain: "fusakui-db.firebaseapp.com",
@@ -16,15 +15,10 @@ const db = getFirestore(app);
 
 export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return res.status(500).json({ error: "APIキーが設定されていません" });
-  }
+  if (!apiKey) return res.status(500).json({ error: "API KEY MISSING" });
 
   try {
-    // 【最安定設定】
-    // 窓口を「v1」、モデルを「gemini-1.5-flash」に固定。
-    // これが現在、最も確実に動く組み合わせです。
+    // 1. AIへのリクエスト（件数を2件に絞って高速化）
     const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     const aiResponse = await fetch(apiUrl, {
@@ -33,22 +27,30 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: "日本の公務員不祥事ニュースを3件探し、JSON形式の配列のみで出力してください。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"公金横領\"}]"
+            text: "日本の最新の公務員不祥事ニュースを2件探し、JSON配列のみ出力してください。例：[{\"date\":\"2024.03.22\",\"location\":\"...\",\"what\":\"...\",\"summary\":\"...\",\"punishment\":\"...\",\"category\":\"...\"}]"
           }]
         }]
       })
     });
 
     const aiData = await aiResponse.json();
+    if (aiData.error) return res.status(500).json({ error: "GOOGLE_ERROR", msg: aiData.error.message });
 
-    // 制限エラーが出た場合の具体的なアドバイスを表示
-    if (aiData.error) {
-      return res.status(500).json({ 
-        error: "Google API制限エラー", 
-        message: aiData.error.message,
-        tip: "もし解決しない場合は Google AI Studio の『Plan』が Free になっているか確認してください"
+    const rawText = aiData.candidates[0].content.parts[0].text;
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+    const newsItems = JSON.parse(jsonMatch[0]);
+
+    // 2. Firebaseに保存（最短の手順で）
+    for (const item of newsItems) {
+      await addDoc(collection(db, "misconduct_cases"), {
+        ...item,
+        collectedAt: serverTimestamp() // いつ収集したか記録
       });
     }
 
-    const rawText = aiData.candidates[0].content.parts[0].text;
-    const jsonMatch = rawText.match(/\[[\s\S]*
+    res.status(200).json({ message: "成功", count: newsItems.length });
+
+  } catch (error) {
+    res.status(500).json({ error: "CRASH", detail: error.message });
+  }
+}
