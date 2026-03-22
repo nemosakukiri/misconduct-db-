@@ -17,8 +17,8 @@ export default async function handler(req, res) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   try {
-    // 【修正ポイント】URLを v1beta から v1 に変更しました
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    // 最も安定している gemini-pro モデルと v1beta を使用します
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
     
     const aiResponse = await fetch(apiUrl, {
       method: 'POST',
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: "日本の公務員不祥事ニュースを3件探し、以下のJSON配列形式のみを出力してください。余計な説明文は一切不要です。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"タイトル\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]"
+            text: "日本の最新の公務員不祥事ニュースを3件探し、以下のJSON形式の配列のみで出力してください。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]"
           }]
         }]
       })
@@ -34,13 +34,17 @@ export default async function handler(req, res) {
 
     const aiData = await aiResponse.json();
 
+    // エラーが出た場合に詳細を表示
     if (aiData.error) {
-      return res.status(500).json({ error: "Google APIエラー", detail: aiData.error.message });
+      return res.status(500).json({ 
+        error: "Google APIエラー", 
+        message: aiData.error.message 
+      });
     }
 
     const rawText = aiData.candidates[0].content.parts[0].text;
     const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return res.status(500).json({ error: "JSON解析失敗", rawText });
+    if (!jsonMatch) return res.status(500).json({ error: "AIが正しいJSONを返しませんでした", rawText });
     
     const newsItems = JSON.parse(jsonMatch[0]);
 
@@ -57,6 +61,6 @@ export default async function handler(req, res) {
     res.status(200).json({ message: "成功しました！", added: addedCount, news: newsItems });
 
   } catch (error) {
-    res.status(500).json({ error: "プログラム実行エラー", message: error.message });
+    res.status(500).json({ error: "実行エラー", message: error.message });
   }
 }
