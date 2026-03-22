@@ -17,10 +17,13 @@ const db = getFirestore(app);
 export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
 
+  if (!apiKey) {
+    return res.status(500).json({ error: "GEMINI_API_KEYが設定されていません" });
+  }
+
   try {
-    // 【修正の核心】リストに確実に存在した「gemini-1.5-flash-latest」を使用します
-    const targetModel = "gemini-1.5-flash-latest"; 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
+    // 【修正の核心】 窓口を「v1」、モデルを「gemini-1.5-flash」に固定します
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     const aiResponse = await fetch(apiUrl, {
       method: 'POST',
@@ -28,7 +31,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: "日本の最新の公務員不祥事・懲戒処分ニュースを3件探し、以下のJSON配列形式のみを出力してください。余計な文章は一切不要です。[{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"内容\", \"punishment\":\"処分\", \"category\":\"汚職\"}]"
+            text: "日本の最新の公務員不祥事ニュースを3件探し、JSON配列形式でのみ回答してください。 [{\"date\":\"2024.03.22\", \"location\":\"自治体名\", \"what\":\"見出し\", \"summary\":\"詳細\", \"punishment\":\"処分\", \"category\":\"公金横領\"}]"
           }]
         }]
       })
@@ -36,12 +39,17 @@ export default async function handler(req, res) {
 
     const aiData = await aiResponse.json();
 
+    // Google APIのエラーハンドリング
     if (aiData.error) {
-      return res.status(500).json({ error: "Google APIエラー", message: aiData.error.message });
+      return res.status(aiResponse.status).json({ 
+        error: "Google APIが拒否しました", 
+        message: aiData.error.message,
+        code: aiData.error.code
+      });
     }
 
     if (!aiData.candidates || !aiData.candidates[0].content) {
-      return res.status(500).json({ error: "AIの返答が空です", detail: aiData });
+      return res.status(500).json({ error: "AIの回答が空です", detail: aiData });
     }
 
     const rawText = aiData.candidates[0].content.parts[0].text;
@@ -52,7 +60,7 @@ export default async function handler(req, res) {
     
     const newsItems = JSON.parse(jsonMatch[0]);
 
-    // Firebaseに保存（重複チェック付き）
+    // Firebaseに保存
     let addedCount = 0;
     for (const item of newsItems) {
       const q = query(collection(db, "misconduct_cases"), where("what", "==", item.what));
@@ -63,12 +71,7 @@ export default async function handler(req, res) {
       }
     }
 
-    res.status(200).json({ 
-      message: "成功しました！", 
-      model_used: targetModel,
-      added: addedCount, 
-      news: newsItems 
-    });
+    res.status(200).json({ message: "成功しました！", added: addedCount, news: newsItems });
 
   } catch (error) {
     res.status(500).json({ error: "実行エラー", message: error.message });
