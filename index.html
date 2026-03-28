@@ -1,13 +1,71 @@
 <!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>公務不正DB</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MISCONDUCT DB | 公務員不祥事アーカイブ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Public+Sans:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  body { background-color: #00000b; color: #ffffff; font-family: 'Public Sans', sans-serif; }
+  .serif { font-family: 'Noto Serif JP', serif; }
+  * { border-radius: 0px !important; }
+</style>
+</head>
+<body class="p-6 md:p-12">
+
+<header class="mb-16 border-b border-white/10 pb-8 flex justify-between items-end">
+  <div>
+    <p class="text-[#ff4d3d] font-bold text-xs uppercase tracking-[0.3em] mb-2">Evidence Source: Verified News</p>
+    <h1 class="text-4xl font-black serif">公務員不祥事ニュースDB</h1>
+  </div>
+  <a href="https://project-mana-final-release.vercel.app/" class="text-xs font-bold border border-white/20 px-4 py-2 no-underline text-white hover:bg-white hover:text-black transition-all">ポータルに戻る</a>
+</header>
+
+<main class="space-y-20 max-w-6xl mx-auto">
+  
+  <!-- Yahoo!ニュース連携セクション -->
+  <section class="bg-white text-black p-8 md:p-16">
+    <div class="flex items-center justify-between mb-12">
+      <h2 class="text-2xl md:text-3xl font-black serif uppercase">National Misconduct Baseline</h2>
+      <span class="bg-[#b02d21] text-white px-3 py-1 text-[10px] font-bold animate-pulse">LIVE MONITORING</span>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-12">
+      <div class="space-y-6">
+        <p class="text-sm font-bold text-gray-500 uppercase tracking-widest">不祥事の判定基準 (ニュースソース)</p>
+        <p class="text-lg leading-relaxed text-justify">
+          Yahoo!ニュース等の大手メディアが報じる全国の公務員不祥事を、本DBの「物差し（基準）」として採用。
+          行政の不作為が、世間一般の倫理基準とどれほど乖離しているかを客観的に測定します。
+        </p>
+        <a href="https://follow.yahoo.co.jp/themes/0ba37f4246d72e7b1339/" target="_blank" class="inline-block bg-[#b02d21] text-white px-8 py-4 font-bold text-sm no-underline shadow-xl">
+          Yahoo!「公務員の不祥事」テーマへ ➔
+        </a>
+      </div>
+      
+      <div class="bg-gray-50 p-8 border-l-8 border-black">
+        <p class="text-xs font-bold text-[#b02d21] mb-4 uppercase tracking-widest">Evidence Matching</p>
+        <h3 class="text-xl font-bold mb-4 serif">右京区事案：法治主義の放棄自白</h3>
+        <p class="text-sm text-gray-600 leading-relaxed mb-6">
+          「法律で仕事をしていない」という発言は、全国の不祥事事例における『職務専念義務違反』および『憲法遵守義務違反』の最高レベルに該当。
+        </p>
+        <div class="flex items-center gap-4">
+          <span class="text-4xl font-black serif">Rank: S</span>
+          <span class="text-[10px] font-bold text-gray-400">極めて深刻な組織的腐敗</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 不祥事リスト（サンプル） -->
+  <section class="space-y-4">
+    <h3 class="text-xs font-bold text-white/40 uppercase tracking-widest">Archive Logs</h3>
+    <div class="bg-white/5 p-8 border border-white/10 flex justify-between items-center">
+      <p class="text-lg font-bold">Case #001: 京都市右京区における意図的な不作為</p>
+      <span class="text-xs font-mono opacity-60">Verified / 2026.03.27</span>
+    </div>
+  </section>
+
+</main>
+
+</body>
 </html>
