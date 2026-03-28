@@ -2,105 +2,127 @@
 <html class="dark" lang="ja">
 <head>
 <meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>FORENSIC LEDGER | 公務員不祥事アーカイブ</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet"/>
+<title>FORENSIC LEDGER | 公務員不祥事台帳</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script>
   tailwind.config = {
     darkMode: "class",
-    theme: { extend: { colors: { "surface": "#00142b", "primary": "#afc8f0", "secondary": "#c6c6c7", "error": "#ffb4ab", "tertiary-container": "#470001", "on-tertiary-container": "#fa3d33" }, fontFamily: { "body": ["Inter", "sans-serif"] }, borderRadius: { "DEFAULT": "0px" } } }
+    theme: { extend: { colors: { "surface": "#000a16", "primary": "#afc8f0", "secondary": "#b02d21", "tertiary": "#fa3d33", "container": "#00142b" }, fontFamily: { "headline": ["Noto Serif JP", "serif"], "body": ["Inter", "sans-serif"] }, borderRadius: { "DEFAULT": "0px" } } }
   }
 </script>
 <style>
-  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-  body { background-color: #00142b; color: #d4e3ff; }
-  .bg-grid { background-image: radial-gradient(rgba(175, 200, 240, 0.05) 1px, transparent 0); background-size: 24px 24px; }
-  .waveform-flat { height: 2px; background-color: #fa3d33; width: 100%; box-shadow: 0 0 10px #fa3d33; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+  body { background-color: #000a16; color: #afc8f0; font-family: 'Inter', sans-serif; letter-spacing: 0.02em; }
+  .bg-grid { background-image: radial-gradient(rgba(175, 200, 240, 0.08) 1px, transparent 0); background-size: 32px 32px; }
+  .waveform-flat { height: 2px; background: #fa3d33; width: 100%; box-shadow: 0 0 15px #fa3d33; position: relative; }
+  .waveform-flat::after { content: 'FLATLINE:説明責任の停止'; position: absolute; top: -15px; right: 0; font-size: 8px; color: #fa3d33; font-weight: bold; }
+  .section-border { border-left: 2px solid #afc8f0; padding-left: 24px; }
 </style>
 </head>
-<body class="bg-surface font-body selection:bg-primary selection:text-on-primary min-h-screen">
+<body class="bg-surface selection:bg-primary selection:text-surface min-h-screen">
 <div class="fixed inset-0 bg-grid pointer-events-none"></div>
 
-<!-- ヘッダー -->
-<header class="fixed top-0 w-full z-50 flex items-center justify-between px-8 h-20 bg-slate-950/60 backdrop-blur-xl border-b border-white/5">
-  <div class="flex items-center gap-3">
-    <span class="material-symbols-outlined text-primary" data-icon="gavel">gavel</span>
-    <h1 class="font-bold uppercase tracking-widest text-primary">FORENSIC LEDGER / 不祥事台帳</h1>
+<!-- ヘッダー：証拠台帳の威厳 -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-8 h-20 bg-[#000a16]/80 backdrop-blur-xl border-b border-white/10">
+  <div class="flex items-center gap-4">
+    <span class="material-symbols-outlined text-primary text-3xl">gavel</span>
+    <h1 class="text-xl font-black tracking-[0.3em] uppercase">Forensic Ledger v2.1</h1>
   </div>
-  <a href="https://project-mana-final-release.vercel.app/" class="text-[10px] font-bold border border-primary/40 px-4 py-2 hover:bg-primary hover:text-surface transition-all no-underline">RETURN TO PORTAL</a>
+  <div class="flex items-center gap-6">
+    <span class="text-[10px] font-bold text-secondary border border-secondary px-2 py-0.5 animate-pulse">LIVE AUDIT MODE</span>
+    <a href="https://project-mana-final-release.vercel.app/" class="text-[10px] font-bold border border-primary/30 px-4 py-2 hover:bg-primary hover:text-surface transition-all no-underline">EXIT TO PORTAL</a>
+  </div>
 </header>
 
-<main class="pt-32 pb-24 px-6 max-w-4xl mx-auto space-y-12">
+<main class="pt-32 pb-32 px-6 max-w-5xl mx-auto space-y-24">
 
-  <!-- 1. 全国の不祥事指標 (Yahoo!ニュース接続) -->
-  <section class="bg-slate-900/50 p-8 border-l-4 border-primary">
-    <div class="flex justify-between items-start mb-6">
-      <div>
-        <p class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2">National Baseline Source</p>
-        <h2 class="text-2xl font-black tracking-tighter">全国不祥事モニタリング</h2>
-      </div>
-      <span class="bg-primary text-surface px-2 py-1 text-[10px] font-bold animate-pulse">SYNCED</span>
+  <!-- セクション1：全国不祥事ベースライン（Yahoo!ニュース統合） -->
+  <section class="space-y-8">
+    <div class="flex justify-between items-end border-b border-white/10 pb-4">
+      <h2 class="serif text-3xl font-black">01. 全国不祥事ベースライン</h2>
+      <p class="text-[10px] text-primary opacity-60 font-mono">SOURCE: Yahoo! NEWS THEME [0ba37f42]</p>
     </div>
-    <p class="text-sm text-secondary leading-relaxed mb-8">
-      Yahoo!ニュースが報じる全国の公務員不祥事を「法的な物差し」として採用。
-      行政の不作為が、世間一般の処分基準とどれほど乖離しているかを自動解析します。
-    </p>
-    <a href="https://follow.yahoo.co.jp/themes/0ba37f4246d72e7b1339/" target="_blank" class="flex items-center justify-between bg-white/5 p-4 border border-white/10 hover:bg-white/10 transition-all no-underline text-inherit group">
-      <span class="text-sm font-bold">Yahoo!ニュース：公務員不祥事テーマへ接続</span>
-      <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">open_in_new</span>
-    </a>
-  </section>
-
-  <!-- 2. 特定事案：右京区の不作為分析 -->
-  <section class="bg-white text-surface p-8 md:p-12 shadow-2xl">
-    <div class="flex items-baseline gap-4 mb-10">
-      <span class="bg-tertiary-container text-on-tertiary-container px-2 py-0.5 text-[10px] font-bold uppercase">Case Log #001</span>
-      <h3 class="text-3xl font-black tracking-tighter">京都市右京区役所：法治主義の放棄</h3>
-    </div>
-
-    <div class="space-y-12">
-      <!-- 自白の記録 -->
-      <div class="border-l-4 border-surface pl-6">
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Verbatim Transcript / 2026.02.09</p>
-        <p class="text-xl font-bold leading-relaxed">「法律で仕事をしていない」</p>
-        <div class="mt-4 p-4 bg-gray-100 text-xs text-gray-600 leading-relaxed italic">
-          分析：この発言は全国のニュースに見られる「収賄」や「公金横領」と同等の、憲法遵守義務に対する重大な違反（Rank: S）と定義される。
-        </div>
-      </div>
-
-      <!-- 沈黙の可視化 -->
-      <div class="bg-gray-50 p-8">
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">Audio Forensic: Silence Analysis (180億円の指摘後)</p>
-        <div class="space-y-2">
-          <div class="flex justify-between text-[10px] font-mono text-gray-400"><span>00:14:22</span> <span>30 SECONDS OF TOTAL SILENCE</span> <span>00:14:52</span></div>
-          <div class="waveform-flat"></div>
-        </div>
-        <p class="mt-6 text-sm font-bold text-on-tertiary-container uppercase tracking-widest flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm">warning</span> 
-          行政の説明責任の完全な停止を確認
+    <div class="grid md:grid-cols-12 gap-8 items-center">
+      <div class="md:col-span-7 space-y-6">
+        <p class="text-lg leading-relaxed text-justify">
+          本台帳は、Yahoo!ニュース等が報じる全国の公務員不祥事を<span class="text-white font-bold underline decoration-secondary">「公務員としての最低限の倫理基準」</span>として採用。
+          これを「物差し」として、個別の不作為事案を客観的に査定（スコアリング）します。
         </p>
+        <a href="https://follow.yahoo.co.jp/themes/0ba37f4246d72e7b1339/" target="_blank" class="inline-flex items-center gap-4 bg-white text-surface px-8 py-4 font-black text-xs uppercase tracking-widest hover:bg-primary transition-all no-underline">
+          全国の不祥事と比較する <span class="material-symbols-outlined">open_in_new</span>
+        </a>
+      </div>
+      <div class="md:col-span-5 bg-container p-8 border-l-4 border-secondary shadow-2xl">
+        <p class="text-[10px] font-bold text-secondary uppercase mb-4 tracking-widest">National Standard</p>
+        <ul class="text-xs space-y-4 opacity-80">
+          <li class="flex justify-between"><span>職務専念義務違反</span><span class="font-bold">懲戒処分対象</span></li>
+          <li class="flex justify-between"><span>説明責任の放棄</span><span class="font-bold">行政手続法違反</span></li>
+          <li class="flex justify-between"><span>生存権の侵害</span><span class="font-bold">憲法25条違反</span></li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <!-- 3. インパクト・インデックス -->
-  <div class="grid grid-cols-2 gap-4">
-    <div class="bg-white/5 p-6 border-l-2 border-on-tertiary-container">
-      <p class="text-[10px] text-secondary font-bold uppercase tracking-widest mb-2">Legal Liability</p>
-      <p class="text-4xl font-black text-on-tertiary-container">98%</p>
+  <!-- セクション2：証拠物件 #001（右京区事案の解剖） -->
+  <section class="space-y-12">
+    <div class="flex justify-between items-end border-b border-white/10 pb-4">
+      <h2 class="serif text-3xl font-black text-secondary">02. 重点調査事案：右京区不作為</h2>
+      <p class="text-[10px] text-secondary font-bold font-mono">CASE_ID: UKYO-2026-001</p>
     </div>
-    <div class="bg-white/5 p-6 border-l-2 border-primary">
-      <p class="text-[10px] text-secondary font-bold uppercase tracking-widest mb-2">Social Injustice</p>
-      <p class="text-4xl font-black text-primary">MAX</p>
+
+    <div class="bg-container p-8 md:p-12 space-y-16 shadow-2xl">
+      <!-- 証言1 -->
+      <div class="section-border">
+        <p class="text-[10px] font-bold text-secondary uppercase tracking-widest mb-4">Verbatim Audio Evidence (自白)</p>
+        <blockquote class="text-2xl md:text-3xl font-black serif leading-tight text-white mb-6">
+          「法律で仕事をしていない」
+        </blockquote>
+        <div class="bg-surface p-4 text-xs leading-relaxed border border-white/5">
+          <span class="text-secondary font-bold">【査定】</span> 全国ニュースにおける『法令遵守義務違反』の事例と比較。この発言は、公務員としての適格性を根本から否定する<span class="text-white font-bold">最高ランク（S）の不法行為</span>と認定。
+        </div>
+      </div>
+
+      <!-- 沈黙の可視化：180億円 -->
+      <div class="section-border">
+        <p class="text-[10px] font-bold text-secondary uppercase tracking-widest mb-4">Forensic Audio Analysis (沈黙)</p>
+        <p class="text-lg font-bold mb-8">「180億円の黒字は、市民を犠牲にした結果ではないか？」という指摘に対する無反応</p>
+        <div class="space-y-4">
+          <div class="flex justify-between text-[10px] font-mono opacity-50"><span>00:14:22 [Confrontation]</span> <span>DURATION: 30.0s</span> <span>00:14:52</span></div>
+          <div class="waveform-flat"></div>
+          <p class="text-center text-[10px] font-bold text-secondary uppercase tracking-[0.2em]">Silence Detected: Evidence of Responsibility Evasion</p>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
+
+  <!-- インパクト・マトリクス -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-1">
+    <div class="bg-container p-6 text-center">
+      <span class="block text-[10px] font-bold opacity-40 mb-2">Legal Liability</span>
+      <span class="text-3xl font-black text-secondary">98%</span>
+    </div>
+    <div class="bg-container p-6 text-center">
+      <span class="block text-[10px] font-bold opacity-40 mb-2">Evidence Density</span>
+      <span class="text-3xl font-black text-primary">High</span>
+    </div>
+    <div class="bg-container p-6 text-center">
+      <span class="block text-[10px] font-bold opacity-40 mb-2">Risk Level</span>
+      <span class="text-3xl font-black text-tertiary">S</span>
+    </div>
+    <div class="bg-container p-6 text-center">
+      <span class="block text-[10px] font-bold opacity-40 mb-2">Status</span>
+      <span class="text-3xl font-black text-white">FIXED</span>
+    </div>
+  </section>
 
 </main>
 
-<nav class="fixed bottom-0 left-0 w-full h-20 bg-slate-950 flex justify-around items-center border-t border-white/5">
-  <div class="flex flex-col items-center opacity-40"><span class="material-symbols-outlined">description</span><span class="text-[8px] font-bold">DOSSIER</span></div>
-  <div class="flex flex-col items-center text-primary"><span class="material-symbols-outlined">analytics</span><span class="text-[8px] font-bold">EVIDENCE</span></div>
+<!-- ボトムナビ：モバイル用 -->
+<nav class="fixed bottom-0 left-0 w-full h-20 bg-slate-950 flex justify-around items-center border-t border-white/5 z-50">
+  <div class="flex flex-col items-center opacity-40"><span class="material-symbols-outlined">folder_open</span><span class="text-[8px] font-bold">DOSSIER</span></div>
+  <div class="flex flex-col items-center text-primary"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span><span class="text-[8px] font-bold">EVIDENCE</span></div>
   <div class="flex flex-col items-center opacity-40"><span class="material-symbols-outlined">inventory_2</span><span class="text-[8px] font-bold">ARCHIVE</span></div>
 </nav>
 
