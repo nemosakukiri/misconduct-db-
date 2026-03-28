@@ -1,58 +1,74 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html class="dark" lang="ja">
 <head>
 <meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>MISCONDUCT DB | PROJECT MANA</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Public+Sans:wght@400;700&display=swap" rel="stylesheet"/>
+<title>FORENSIC LEDGER | 公務員不祥事アーカイブ</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script>
-  tailwind.config = { theme: { extend: { colors: { "primary": "#00000b", "secondary": "#b02d21", "surface": "#00000b", "on-surface": "#ffffff" }, fontFamily: { "headline": ["Noto Serif JP", "serif"], "body": ["Public Sans", "sans-serif"] } } } }
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: { colors: { "surface": "#00142b", "primary": "#afc8f0", "secondary": "#c6c6c7", "error": "#ffb4ab", "tertiary-container": "#470001", "on-tertiary-container": "#fa3d33" }, fontFamily: { "body": ["Inter", "sans-serif"] }, borderRadius: { "DEFAULT": "0px" } } }
+  }
 </script>
-<style>* { border-radius: 0px !important; } .bg-grid { background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 0); background-size: 24px 24px; }</style>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  body { background-color: #00142b; color: #d4e3ff; }
+  .bg-grid { background-image: radial-gradient(rgba(175, 200, 240, 0.05) 1px, transparent 0); background-size: 24px 24px; }
+  .waveform-flat { height: 2px; background-color: #fa3d33; width: 100%; box-shadow: 0 0 10px #fa3d33; }
+</style>
 </head>
-<body class="bg-[#00000b] text-white font-body selection:bg-secondary">
+<body class="bg-surface font-body selection:bg-primary selection:text-on-primary min-h-screen">
 <div class="fixed inset-0 bg-grid pointer-events-none"></div>
 
-<header class="relative z-10 p-8 md:p-12 border-b border-white/10 flex justify-between items-end">
-  <div>
-    <p class="text-[#b02d21] font-bold text-xs uppercase tracking-[0.3em] mb-2">National Misconduct Baseline</p>
-    <h1 class="text-4xl font-black font-headline">公務員不祥事ニュースDB</h1>
+<!-- ヘッダー -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-8 h-20 bg-slate-950/60 backdrop-blur-xl border-b border-white/5">
+  <div class="flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary" data-icon="gavel">gavel</span>
+    <h1 class="font-bold uppercase tracking-widest text-primary">FORENSIC LEDGER / 不祥事台帳</h1>
   </div>
-  <a href="https://project-mana-final-release.vercel.app/" class="text-xs font-bold border border-white/20 px-6 py-2 no-underline text-white hover:bg-white hover:text-black transition-all">ポータルに戻る</a>
+  <a href="https://project-mana-final-release.vercel.app/" class="text-[10px] font-bold border border-primary/40 px-4 py-2 hover:bg-primary hover:text-surface transition-all no-underline">RETURN TO PORTAL</a>
 </header>
 
-<main class="relative z-10 p-8 md:p-12 max-w-6xl mx-auto space-y-20">
-  <!-- Yahoo!ニュース基準セクション -->
-  <section class="bg-white text-black p-10 md:p-16 shadow-2xl">
-    <div class="flex items-center justify-between mb-12">
-      <h2 class="text-2xl font-black font-headline uppercase tracking-tighter">不祥事の「物差し」</h2>
-      <span class="bg-[#b02d21] text-white px-3 py-1 text-[10px] font-bold animate-pulse uppercase tracking-widest">Live News Evidence</span>
-    </div>
-    
-    <div class="grid md:grid-cols-2 gap-16">
-      <div class="space-y-8">
-        <p class="text-sm font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">National Standard (Yahoo! News)</p>
-        <p class="text-lg leading-relaxed text-justify font-medium">
-          Yahoo!ニュースが報じる全国の不祥事を「ソース」として採用。あなたたちが私に行っている「3ヶ月の放置」や「恫喝」が、世間で処分されている事例と比べてどれほど異常かを客観的に証明します。
-        </p>
-        <a href="https://follow.yahoo.co.jp/themes/0ba37f4246d72e7b1339/" target="_blank" class="inline-block bg-black text-white px-8 py-4 font-bold text-sm no-underline hover:bg-[#b02d21] transition-all">
-          全国の不祥事ニュースを確認する ➔
-        </a>
+<main class="pt-32 pb-24 px-6 max-w-4xl mx-auto space-y-12">
+
+  <!-- 1. 全国の不祥事指標 (Yahoo!ニュース接続) -->
+  <section class="bg-slate-900/50 p-8 border-l-4 border-primary">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <p class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2">National Baseline Source</p>
+        <h2 class="text-2xl font-black tracking-tighter">全国不祥事モニタリング</h2>
       </div>
-      
-      <div class="bg-gray-50 p-8 border-l-8 border-[#b02d21]">
-        <p class="text-xs font-bold text-[#b02d21] mb-4 uppercase tracking-widest">Comparison Result</p>
-        <h3 class="text-xl font-bold mb-4 font-headline">右京区事案：法治主義の放棄</h3>
-        <p class="text-sm text-gray-600 leading-relaxed mb-8">
-          「法律で仕事をしていない」という係長の発言は、全国のニュースにおける『職務専念義務違反』の基準を著しく上回る「極めて深刻」な事態と判定されました。
-        </p>
-        <div class="flex items-baseline gap-4">
-          <span class="text-5xl font-black font-headline text-[#b02d21]">Rank: S</span>
-          <span class="text-[10px] font-bold text-gray-400 uppercase">Systemic Corruption</span>
+      <span class="bg-primary text-surface px-2 py-1 text-[10px] font-bold animate-pulse">SYNCED</span>
+    </div>
+    <p class="text-sm text-secondary leading-relaxed mb-8">
+      Yahoo!ニュースが報じる全国の公務員不祥事を「法的な物差し」として採用。
+      行政の不作為が、世間一般の処分基準とどれほど乖離しているかを自動解析します。
+    </p>
+    <a href="https://follow.yahoo.co.jp/themes/0ba37f4246d72e7b1339/" target="_blank" class="flex items-center justify-between bg-white/5 p-4 border border-white/10 hover:bg-white/10 transition-all no-underline text-inherit group">
+      <span class="text-sm font-bold">Yahoo!ニュース：公務員不祥事テーマへ接続</span>
+      <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">open_in_new</span>
+    </a>
+  </section>
+
+  <!-- 2. 特定事案：右京区の不作為分析 -->
+  <section class="bg-white text-surface p-8 md:p-12 shadow-2xl">
+    <div class="flex items-baseline gap-4 mb-10">
+      <span class="bg-tertiary-container text-on-tertiary-container px-2 py-0.5 text-[10px] font-bold uppercase">Case Log #001</span>
+      <h3 class="text-3xl font-black tracking-tighter">京都市右京区役所：法治主義の放棄</h3>
+    </div>
+
+    <div class="space-y-12">
+      <!-- 自白の記録 -->
+      <div class="border-l-4 border-surface pl-6">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Verbatim Transcript / 2026.02.09</p>
+        <p class="text-xl font-bold leading-relaxed">「法律で仕事をしていない」</p>
+        <div class="mt-4 p-4 bg-gray-100 text-xs text-gray-600 leading-relaxed italic">
+          分析：この発言は全国のニュースに見られる「収賄」や「公金横領」と同等の、憲法遵守義務に対する重大な違反（Rank: S）と定義される。
         </div>
       </div>
-    </div>
-  </section>
-</main>
-</body>
-</html>
+
+      <!-- 沈黙の可視化 -->
+      <div class="bg-gray-50 p-8">
+        <p class="text
