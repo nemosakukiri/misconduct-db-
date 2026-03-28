@@ -1,32 +1,58 @@
-<!-- 不祥事DB内の「証拠ソース」セクション -->
-<section class="bg-white p-8 border-t-8 border-[#00000b]">
-  <div class="flex items-center justify-between mb-8">
-    <h2 class="serif-heavy text-2xl uppercase tracking-widest">National Misconduct Evidence</h2>
-    <span class="bg-[#b02d21] text-white px-3 py-1 text-[10px] font-bold">LIVE NEWS SOURCE</span>
-  </div>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MISCONDUCT DB | PROJECT MANA</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Public+Sans:wght@400;700&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = { theme: { extend: { colors: { "primary": "#00000b", "secondary": "#b02d21", "surface": "#00000b", "on-surface": "#ffffff" }, fontFamily: { "headline": ["Noto Serif JP", "serif"], "body": ["Public Sans", "sans-serif"] } } } }
+</script>
+<style>* { border-radius: 0px !important; } .bg-grid { background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 0); background-size: 24px 24px; }</style>
+</head>
+<body class="bg-[#00000b] text-white font-body selection:bg-secondary">
+<div class="fixed inset-0 bg-grid pointer-events-none"></div>
 
-  <div class="grid md:grid-cols-2 gap-8">
-    <!-- 左：Yahoo!ニュースのソース（物差し） -->
-    <div class="bg-gray-50 p-6 border border-gray-200">
-      <p class="text-[10px] font-black text-gray-400 uppercase mb-4">Baseline: 全国の不祥事指標（Yahoo!ニュース）</p>
-      <div class="space-y-4">
-        <p class="text-sm leading-relaxed">
-          全国で報じられている公務員の不当行為を「ソース」として常時モニタリング。
-          これらを基準に、個別の事案の悪質性をスコアリングします。
+<header class="relative z-10 p-8 md:p-12 border-b border-white/10 flex justify-between items-end">
+  <div>
+    <p class="text-[#b02d21] font-bold text-xs uppercase tracking-[0.3em] mb-2">National Misconduct Baseline</p>
+    <h1 class="text-4xl font-black font-headline">公務員不祥事ニュースDB</h1>
+  </div>
+  <a href="https://project-mana-final-release.vercel.app/" class="text-xs font-bold border border-white/20 px-6 py-2 no-underline text-white hover:bg-white hover:text-black transition-all">ポータルに戻る</a>
+</header>
+
+<main class="relative z-10 p-8 md:p-12 max-w-6xl mx-auto space-y-20">
+  <!-- Yahoo!ニュース基準セクション -->
+  <section class="bg-white text-black p-10 md:p-16 shadow-2xl">
+    <div class="flex items-center justify-between mb-12">
+      <h2 class="text-2xl font-black font-headline uppercase tracking-tighter">不祥事の「物差し」</h2>
+      <span class="bg-[#b02d21] text-white px-3 py-1 text-[10px] font-bold animate-pulse uppercase tracking-widest">Live News Evidence</span>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-16">
+      <div class="space-y-8">
+        <p class="text-sm font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">National Standard (Yahoo! News)</p>
+        <p class="text-lg leading-relaxed text-justify font-medium">
+          Yahoo!ニュースが報じる全国の不祥事を「ソース」として採用。あなたたちが私に行っている「3ヶ月の放置」や「恫喝」が、世間で処分されている事例と比べてどれほど異常かを客観的に証明します。
         </p>
-        <a href="https://follow.yahoo.co.jp/themes/0ba37f4246d72e7b1339/" target="_blank" class="inline-block bg-black text-white px-6 py-3 text-xs font-bold no-underline">
-          Yahoo!不祥事テーマを確認 ➔
+        <a href="https://follow.yahoo.co.jp/themes/0ba37f4246d72e7b1339/" target="_blank" class="inline-block bg-black text-white px-8 py-4 font-bold text-sm no-underline hover:bg-[#b02d21] transition-all">
+          全国の不祥事ニュースを確認する ➔
         </a>
       </div>
+      
+      <div class="bg-gray-50 p-8 border-l-8 border-[#b02d21]">
+        <p class="text-xs font-bold text-[#b02d21] mb-4 uppercase tracking-widest">Comparison Result</p>
+        <h3 class="text-xl font-bold mb-4 font-headline">右京区事案：法治主義の放棄</h3>
+        <p class="text-sm text-gray-600 leading-relaxed mb-8">
+          「法律で仕事をしていない」という係長の発言は、全国のニュースにおける『職務専念義務違反』の基準を著しく上回る「極めて深刻」な事態と判定されました。
+        </p>
+        <div class="flex items-baseline gap-4">
+          <span class="text-5xl font-black font-headline text-[#b02d21]">Rank: S</span>
+          <span class="text-[10px] font-bold text-gray-400 uppercase">Systemic Corruption</span>
+        </div>
+      </div>
     </div>
-
-    <!-- 右：個別事案との照合 -->
-    <div class="bg-white p-6 border-l-4 border-[#b02d21] shadow-sm">
-      <p class="text-[10px] font-black text-[#b02d21] uppercase mb-4">Evidence Matching: 事案照合</p>
-      <h3 class="text-lg font-bold mb-2 text-primary">右京区事案 #001 との整合性</h3>
-      <p class="text-xs text-gray-600 leading-relaxed">
-        「法律で仕事をしていない」という自白は、全国の懲戒免職事例における「法令遵守義務違反」の基準を著しく上回る悪質性と判定されました。
-      </p>
-    </div>
-  </div>
-</section>
+  </section>
+</main>
+</body>
+</html>
